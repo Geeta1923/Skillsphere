@@ -18,6 +18,7 @@ const aiRoutes = require('./routes/aiRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const disputeRoutes = require('./routes/disputeRoutes');
 const availabilityRoutes = require('./routes/availabilityRoutes');
+const mentorshipRoutes = require('./routes/mentorshipRoutes');
 
 
 
@@ -85,6 +86,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/disputes', disputeRoutes);
 app.use('/api/availability', availabilityRoutes);
+app.use('/api/mentorship', mentorshipRoutes);
 
 // ===== SOCKET.IO EVENTS =====
 const Message = require('./models/Message');

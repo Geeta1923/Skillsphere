@@ -151,9 +151,179 @@ const getMatchScoreForFreelancer = asyncHandler(async (req, res) => {
   res.json({ success: true, score, matchedSkills });
 });
 
+// POST /api/ai/generate-proposal  ← generate AI cover letter
+const generateProposal = asyncHandler(async (req, res) => {
+  const { gigId } = req.body;
+
+  const [profile, gig] = await Promise.all([
+    FreelancerProfile.findOne({ user: req.user._id }),
+    Gig.findById(gigId)
+  ]);
+
+  if (!profile || !gig) {
+    res.status(404);
+    throw new Error('Required data not found');
+  }
+
+  const prompt = `Write a professional, persuasive freelance proposal for the following project:
+    Project Title: ${gig.title}
+    Description: ${gig.description}
+    Requirements: ${gig.skillsRequired.join(', ')}
+    Budget: ${gig.budget}
+
+    The freelancer has the following profile:
+    Title: ${profile.title}
+    Skills: ${profile.skills.map(s => s.name).join(', ')}
+    Bio: ${profile.bio}
+
+    Structure the proposal with:
+    1. A strong opening tailored to the project.
+    2. How the freelancer's skills solve the client's problem.
+    3. A brief mention of relevant experience.
+    4. A call to action.
+    Keep it concise and professional. Do not use placeholders like [Insert Name].`;
+
+  const { generateText } = require('../services/aiMatchingService');
+  const proposal = await generateText(prompt);
+
+  if (!proposal) {
+    res.status(500);
+    throw new Error('AI generation failed');
+  }
+
+  res.json({ success: true, proposal });
+});
+
+// GET /api/ai/skill-gap  ← Analyze readiness for a target company/role
+const getSkillGapAnalysis = asyncHandler(async (req, res) => {
+  const { targetCompany = 'Google', targetRole = 'Software Engineer' } = req.query;
+  
+  const profile = await FreelancerProfile.findOne({ user: req.user._id });
+  if (!profile) {
+    res.status(404);
+    throw new Error('Freelancer profile not found');
+  }
+
+  const prompt = `Act as a Senior Technical Recruiter at ${targetCompany}. 
+    Analyze this freelancer's readiness for a ${targetRole} role.
+    
+    Current Skills: ${profile.skills.map(s => s.name).join(', ')}
+    Professional Summary: ${profile.bio}
+    
+    Provide a detailed analysis in strictly VALID JSON format (no other text).
+    {
+      "currentLevel": 65,
+      "missingSkills": ["System Design", "Advanced DSA", "Node.js Performance Tuning"],
+      "estimatedPrepTime": "3-4 Months",
+      "roadmap": "Step 1: Master Leetcode Medium. Step 2: Learn System Design patterns.",
+      "placementReadinessScore": 6.5,
+      "marketDemand": "High"
+    }`;
+
+  const { generateText } = require('../services/aiMatchingService');
+  const responseText = await generateText(prompt);
+  
+  try {
+    // Clean JSON if the AI included markdown wrappers
+    const jsonStr = responseText.replace(/```json|```/g, '').trim();
+    const analysis = JSON.parse(jsonStr);
+    res.json({ success: true, analysis });
+  } catch (error) {
+    console.error('Parsing error:', responseText);
+    res.status(500);
+    throw new Error('AI analysis produced invalid data format');
+  }
+});
+
+// POST /api/ai/interview  ← Simulate a conversation with an AI Interviewer
+const handleInterviewSession = asyncHandler(async (req, res) => {
+  const { messages = [], targetCompany = 'Google', targetRole = 'Software Engineer' } = req.body;
+
+  // Construct context from previous messages
+  const conversationHistory = messages.map(m => 
+    `${m.isUser ? 'Candidate' : 'Interviewer'}: ${m.text}`
+  ).join('\n');
+
+  const prompt = `You are a professional, slightly tough Interviewer at ${targetCompany}. 
+    You are interviewing a candidate for a ${targetRole} position.
+    
+    CONVERSATION HISTORY:
+    ${conversationHistory}
+    
+    YOUR TASK:
+    1. If the history is empty, introduce yourself and ask a standard "Tell me about yourself" or initial technical question.
+    2. If the candidate answered, briefly evaluate their answer (be critical but fair) and ask a relevant follow-up question.
+    3. If there are more than 6 messages in the history, end the interview, provide a summary of their performance (Technical Skill, Communication, Confidence), and give a FINAL SCORE (1-10).
+    
+    Keep responses concise and interview-like. Do not break character.`;
+
+  const { generateText } = require('../services/aiMatchingService');
+  const responseText = await generateText(prompt);
+
+  if (!responseText) {
+    res.status(500);
+    throw new Error('AI failed to respond');
+  }
+
+  res.json({ success: true, text: responseText });
+});
+
+// GET /api/ai/portfolio-architect  ← Analyze portfolio and suggest "Resume-Worthy" projects
+const getPortfolioAnalysis = asyncHandler(async (req, res) => {
+  const profile = await FreelancerProfile.findOne({ user: req.user._id });
+  if (!profile) {
+    res.status(404);
+    throw new Error('Freelancer profile not found');
+  }
+
+  const prompt = `Act as a Technical CTO and Career Coach. 
+    Analyze this freelancer's current profile:
+    Title: ${profile.title}
+    Current Skills: ${profile.skills.map(s => s.name).join(', ')}
+    Bio: ${profile.bio}
+    
+    TASK:
+    1. Give a "Portfolio Strength Score" (0-100).
+    2. Identify 3 critical technical gaps in their current portfolio.
+    3. Generate 3 unique "Resume-Worthy" project ideas that will make them stand out to Top Tech Companies.
+    
+    Respond STRICTLY in VALID JSON format (no other text):
+    {
+      "portfolioScore": 65,
+      "strengths": ["Clean bio", "Core frontend skills"],
+      "weaknesses": ["Lack of backend scale", "No cloud experience"],
+      "suggestedProjects": [
+        {
+          "title": "Real-time Distributed Chat Engine",
+          "difficulty": "Advanced",
+          "techStack": ["Node.js", "Socket.io", "Redis", "Docker"],
+          "whyItHelps": "Demonstrates capability to handle real-time state and infrastructure scaling.",
+          "roadmap": "Week 1: Setup basic socket server. Week 2: Add Redis pub/sub. Week 3: Dockerize and scale."
+        }
+      ]
+    }`;
+
+  const { generateText } = require('../services/aiMatchingService');
+  const responseText = await generateText(prompt);
+
+  try {
+    const jsonStr = responseText.replace(/```json|```/g, '').trim();
+    const analysis = JSON.parse(jsonStr);
+    res.json({ success: true, analysis });
+  } catch (error) {
+    console.error('AI JSON Error:', responseText);
+    res.status(500);
+    throw new Error('AI produced invalid project data');
+  }
+});
+
 module.exports = {
   getMatchedFreelancers,
   getRecommendedGigs,
   getTrending,
-  getMatchScoreForFreelancer
+  getMatchScoreForFreelancer,
+  generateProposal,
+  getSkillGapAnalysis,
+  handleInterviewSession,
+  getPortfolioAnalysis
 };

@@ -105,7 +105,21 @@ const freelancerProfileSchema = new mongoose.Schema({
         default: null
       }
     }
-  ]
+  ],
+  // Mentorship Fields
+  isMentor: {
+    type: Boolean,
+    default: false
+  },
+  mentorshipRate: {
+    type: Number,
+    default: 0
+  },
+  mentorshipSpecialties: [String], // e.g. ["System Design", "UI/UX"]
+  mentorshipRating: {
+    type: Number,
+    default: 0
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('FreelancerProfile', freelancerProfileSchema);

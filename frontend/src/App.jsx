@@ -34,6 +34,11 @@ import DisputesPage from './pages/dashboard/DisputesPage'
 import AdminDisputes from './pages/admin/AdminDisputes'
 import AvailabilityScheduler from './pages/dashboard/AvailabilityScheduler'
 import AIMatch from './pages/dashboard/AIMatch'
+import SkillGapPage from './pages/dashboard/SkillGapPage'
+import InterviewPage from './pages/dashboard/InterviewPage'
+import PortfolioArchitect from './pages/dashboard/PortfolioArchitect'
+import MentorMarketplace from './pages/dashboard/MentorMarketplace'
+import MySessions from './pages/dashboard/MySessions'
 
 
 
@@ -289,6 +294,46 @@ function App() {
   <ProtectedRoute>
     <DashboardLayout>
       <AIMatch />
+    </DashboardLayout>
+  </ProtectedRoute>
+} />
+
+<Route path="/dashboard/skill-gap" element={
+  <FreelancerRoute>
+    <DashboardLayout>
+      <SkillGapPage />
+    </DashboardLayout>
+  </FreelancerRoute>
+} />
+
+<Route path="/dashboard/interview" element={
+  <FreelancerRoute>
+    <DashboardLayout>
+      <InterviewPage />
+    </DashboardLayout>
+  </FreelancerRoute>
+} />
+
+<Route path="/dashboard/portfolio-architect" element={
+  <FreelancerRoute>
+    <DashboardLayout>
+      <PortfolioArchitect />
+    </DashboardLayout>
+  </FreelancerRoute>
+} />
+
+<Route path="/dashboard/mentors" element={
+  <ProtectedRoute>
+    <DashboardLayout>
+      <MentorMarketplace />
+    </DashboardLayout>
+  </ProtectedRoute>
+} />
+
+<Route path="/dashboard/mentorship-sessions" element={
+  <ProtectedRoute>
+    <DashboardLayout>
+      <MySessions />
     </DashboardLayout>
   </ProtectedRoute>
 } />

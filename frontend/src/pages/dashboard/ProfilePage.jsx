@@ -41,6 +41,11 @@ const ProfilePage = () => {
     title: '', description: '', link: '', image: ''
   })
 
+  // Mentorship form
+  const [mentorshipForm, setMentorshipForm] = useState({
+    isMentor: false, rate: 0, specialties: ''
+  })
+
   // 2FA state
   const [twoFactorToken, setTwoFactorToken] = useState('')
   const [qrCode, setQrCode] = useState(null)
@@ -62,6 +67,11 @@ const ProfilePage = () => {
         hourlyRate: data.profile.hourlyRate || '',
         location: data.profile.location || '',
         availability: data.profile.availability || 'available'
+      })
+      setMentorshipForm({
+        isMentor: data.profile.isMentor || false,
+        rate: data.profile.mentorshipRate || 0,
+        specialties: (data.profile.mentorshipSpecialties || []).join(', ')
       })
     } catch (error) {
       console.error('fetchProfile error:', error)
@@ -299,6 +309,22 @@ const handlePortfolioImageUpload = async (e) => {
   }
 }
 
+// ===== TOGGLE MENTORSHIP =====
+const handleMentorshipSubmit = async (e) => {
+  e.preventDefault()
+  try {
+    const { data } = await API.post('/mentorship/toggle', {
+      isMentor: mentorshipForm.isMentor,
+      rate: mentorshipForm.rate,
+      specialties: mentorshipForm.specialties.split(',').map(s => s.trim())
+    })
+    setProfile(data.profile)
+    toast.success('Mentorship settings updated!')
+  } catch (error) {
+    toast.error('Failed to update mentorship settings')
+  }
+}
+
 
 
   const tabs = [
@@ -308,6 +334,7 @@ const handlePortfolioImageUpload = async (e) => {
     { id: 'education', label: '🎓 Education' },
     { id: 'certifications', label: '📜 Certifications' },
     { id: 'portfolio', label: '🖼️ Portfolio' },
+    { id: 'mentorship', label: '🎓 Mentorship' },
     { id: 'security', label: '🔒 Security' },
   ]
 
@@ -861,6 +888,52 @@ const handlePortfolioImageUpload = async (e) => {
               ))}
             </div>
           </div>
+        )}
+
+        {/* ===== MENTORSHIP ===== */}
+        {activeTab === 'mentorship' && (
+          <form onSubmit={handleMentorshipSubmit} style={styles.form}>
+            <h3 style={styles.sectionTitle}>Mentorship Settings</h3>
+            <p style={styles.subtitle}>Help others grow and earn by sharing your expertise.</p>
+            
+            <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <label style={styles.checkLabel}>
+                <input 
+                  type="checkbox" 
+                  checked={mentorshipForm.isMentor}
+                  onChange={e => setMentorshipForm({...mentorshipForm, isMentor: e.target.checked})}
+                />
+                <span style={{ fontSize: '16px', fontWeight: 600 }}>Enable My Mentor Profile</span>
+              </label>
+
+              {mentorshipForm.isMentor && (
+                <>
+                  <div style={styles.field}>
+                    <label style={styles.label}>Mentorship Hourly Rate (₹)</label>
+                    <input 
+                      className="input" 
+                      type="number" 
+                      value={mentorshipForm.rate}
+                      onChange={e => setMentorshipForm({...mentorshipForm, rate: e.target.value})}
+                    />
+                  </div>
+                  <div style={styles.field}>
+                    <label style={styles.label}>Mentorship Specialties (Comma separated)</label>
+                    <input 
+                      className="input" 
+                      placeholder="e.g. System Design, DSA, Career Advice"
+                      value={mentorshipForm.specialties}
+                      onChange={e => setMentorshipForm({...mentorshipForm, specialties: e.target.value})}
+                    />
+                  </div>
+                </>
+              )}
+              
+              <button className="btn-primary" type="submit" style={{ maxWidth: '200px' }}>
+                💾 Save Mentorship Settings
+              </button>
+            </div>
+          </form>
         )}
 
         {/* ===== SECURITY / 2FA ===== */}

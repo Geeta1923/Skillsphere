@@ -20,6 +20,7 @@ const GigDetail = () => {
   const [proposal, setProposal] = useState({
     coverLetter: '', bidAmount: '', estimatedDays: ''
   })
+  const [generatingAI, setGeneratingAI] = useState(false)
 
   async function fetchGig() {
     try {
@@ -68,6 +69,18 @@ const GigDetail = () => {
     loadGigDetail()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  const handleGenerateAI = async () => {
+    setGeneratingAI(true)
+    try {
+      const { data } = await API.post('/ai/generate-proposal', { gigId: id })
+      setProposal({ ...proposal, coverLetter: data.proposal })
+      toast.success('Proposal generated!')
+    } catch (error) {
+      toast.error('AI generation failed')
+    }
+    setGeneratingAI(false)
+  }
 
   const handleSubmitProposal = async (e) => {
     e.preventDefault()
@@ -216,10 +229,20 @@ const GigDetail = () => {
                   </div>
 
                   <div style={styles.field}>
-                    <label style={styles.label}>Cover Letter</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label style={styles.label}>Cover Letter</label>
+                      <button 
+                        type="button"
+                        onClick={handleGenerateAI}
+                        disabled={generatingAI}
+                        style={styles.aiBtn}
+                      >
+                        {generatingAI ? '🧠 Generating...' : '🤖 Generate with AI'}
+                      </button>
+                    </div>
                     <textarea
                       className="input"
-                      rows={5}
+                      rows={8}
                       placeholder="Explain why you're the best fit for this project..."
                       value={proposal.coverLetter}
                       onChange={e => setProposal({ ...proposal, coverLetter: e.target.value })}
@@ -471,7 +494,19 @@ const styles = {
   infoList: { display: 'flex', flexDirection: 'column', gap: '12px' },
   infoItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   infoLabel: { fontSize: '13px', color: 'var(--text-secondary)' },
-  infoValue: { fontSize: '13px', fontWeight: 500 }
+  infoValue: { fontSize: '13px', fontWeight: 500 },
+  aiBtn: {
+    background: 'rgba(108,99,255,0.1)',
+    border: '1px solid var(--primary)',
+    color: 'var(--primary)',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    marginBottom: '4px'
+  }
 }
 
 export default GigDetail

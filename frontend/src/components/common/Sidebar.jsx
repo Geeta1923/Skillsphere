@@ -17,6 +17,11 @@ const freelancerNav = [
   { path: '/dashboard/reviews', icon: '⭐', label: 'Reviews' },
   { path: '/dashboard/disputes', icon: '⚖️', label: 'Disputes' },
   { path: '/dashboard/availability', icon: '📅', label: 'Availability' },
+  { path: '/dashboard/skill-gap', icon: '🚀', label: 'Skill Gap Analysis' },
+  { path: '/dashboard/interview', icon: '🎙️', label: 'AI Interview' },
+  { path: '/dashboard/portfolio-architect', icon: '🏗️', label: 'Portfolio Architect' },
+  { path: '/dashboard/mentors', icon: '🎓', label: 'Mentors' },
+  { path: '/dashboard/mentorship-sessions', icon: '📅', label: 'My Sessions' },
 ]
 
 const clientNav = [
@@ -29,6 +34,8 @@ const clientNav = [
   { path: '/dashboard/aimatch', icon: '🤖', label: 'AI Match' },
   { path: '/dashboard/progress', icon: '📊', label: 'Progress Tracker' },
   { path: '/dashboard/disputes', icon: '⚖️', label: 'Disputes' },
+  { path: '/dashboard/mentors', icon: '🎓', label: 'Find a Mentor' },
+  { path: '/dashboard/mentorship-sessions', icon: '📅', label: 'My Sessions' },
 ]
 const adminNav = [
   { path: '/admin', icon: '📊', label: 'Overview' },

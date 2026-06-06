@@ -96,4 +96,27 @@ const getTrendingSkills = async (Gig) => {
     .map(([skill, count]) => ({ skill, count }));
 };
 
-module.exports = { calculateMatchScore, getTrendingSkills, keywordMatchScore };
+// Generate text based on prompt using direct Axios call to Gemini
+const generateText = async (prompt) => {
+  try {
+    const key = (process.env.GEMINI_API_KEY || "").trim();
+    // Debug: Print start of key to verify which one is being used
+    console.log(`DEBUG: Using Gemini Key starting with: ${key.substring(0, 5)}...`);
+
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash:generateContent?key=${key}`,
+      { contents: [{ parts: [{ text: prompt }] }] },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    if (response.data && response.data.candidates && response.data.candidates[0]) {
+      return response.data.candidates[0].content.parts[0].text;
+    }
+    return null;
+  } catch (error) {
+    console.error('Gemini API Error:', error.response?.data || error.message);
+    return null;
+  }
+};
+
+module.exports = { calculateMatchScore, getTrendingSkills, keywordMatchScore, generateText };
