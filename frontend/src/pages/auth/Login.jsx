@@ -10,6 +10,10 @@ const Login = () => {
   const [show2FA, setShow2FA] = useState(false)
   const [twoFactorCode, setTwoFactorCode] = useState('')
   const [tempUserId, setTempUserId] = useState(null)
+  const [showEmailOTP, setShowEmailOTP] = useState(false)
+  const [emailForOTP, setEmailForOTP] = useState('')
+  const [emailOTPCode, setEmailOTPCode] = useState('')
+  const [otpRequested, setOtpRequested] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { isLoading } = useSelector((state) => state.auth)
@@ -55,6 +59,37 @@ const Login = () => {
     } catch (error) {
       dispatch(authFail(error.response?.data?.message || 'Invalid code'))
       toast.error('Invalid 2FA code')
+    }
+  }
+
+  // ----- EMAIL OTP HANDLERS -----
+  const requestEmailOTP = async () => {
+    if (!emailForOTP) {
+      toast.error('Please enter your email')
+      return
+    }
+    dispatch(authStart())
+    try {
+      await API.post('/auth/email-otp/request', { email: emailForOTP })
+      toast.success('OTP sent to your email')
+      setOtpRequested(true)
+    } catch (error) {
+      dispatch(authFail(error.response?.data?.message || 'Failed to send OTP'))
+      toast.error(error.response?.data?.message || 'Failed to send OTP')
+    }
+  }
+
+  const verifyEmailOTP = async (e) => {
+    e.preventDefault()
+    dispatch(authStart())
+    try {
+      const { data } = await API.post('/auth/email-otp/verify', { email: emailForOTP, otp: emailOTPCode })
+      dispatch(authSuccess(data.user))
+      toast.success('Logged in via Email OTP')
+      navigate('/dashboard')
+    } catch (error) {
+      dispatch(authFail(error.response?.data?.message || 'Invalid OTP'))
+      toast.error(error.response?.data?.message || 'Invalid OTP')
     }
   }
 
@@ -143,23 +178,75 @@ const Login = () => {
           </form>
         )}
 
-       <div style={styles.divider}>
-  <span style={styles.dividerLine} />
-  <span style={styles.dividerText}>or</span>
-  <span style={styles.dividerLine} />
-</div>
+        <div style={styles.divider}>
+   <span style={styles.dividerLine} />
+   <span style={styles.dividerText}>or</span>
+   <span style={styles.dividerLine} />
+ </div>
 
-<a
-  href="http://localhost:5000/api/auth/google"
-  style={styles.googleBtn}
->
-  <img
-    src="https://www.google.com/favicon.ico"
-    alt="Google"
-    style={{ width: '18px', height: '18px' }}
-  />
-  Continue with Google
-</a>
+        {/* EMAIL OTP SECTION */}
+        {showEmailOTP ? (
+          otpRequested ? (
+            <form onSubmit={verifyEmailOTP} style={styles.form}>
+              <div style={styles.field}>
+                <label style={styles.label}>Enter OTP</label>
+                <input
+                  className="input"
+                  type="text"
+                  placeholder="123456"
+                  value={emailOTPCode}
+                  onChange={(e) => setEmailOTPCode(e.target.value)}
+                  maxLength={6}
+                  required
+                />
+              </div>
+              <button className="btn-primary" type="submit" disabled={isLoading}>
+                {isLoading ? 'Verifying...' : 'Verify OTP'}
+              </button>
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                onClick={() => { setOtpRequested(false); setEmailOTPCode(''); }}
+              >
+                Resend OTP
+              </button>
+            </form>
+          ) : (
+            <form style={styles.form}>
+              <div style={styles.field}>
+                <label style={styles.label}>Email</label>
+                <input
+                  className="input"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={emailForOTP}
+                  onChange={(e) => setEmailForOTP(e.target.value)}
+                  required
+                />
+              </div>
+              <button className="btn-primary" type="button" onClick={requestEmailOTP} disabled={isLoading}>
+                {isLoading ? 'Sending...' : 'Send OTP'}
+              </button>
+            </form>
+          )
+        ) : (
+          <button className="btn-primary" type="button" onClick={() => setShowEmailOTP(true)} style={{ marginTop: '12px' }}>
+            Login with Email OTP
+          </button>
+        )}
+
+        {/* GOOGLE OAUTH */}
+        <a
+          href="http://localhost:5000/api/auth/google"
+          style={styles.googleBtn}
+        >
+          <img
+            src="https://www.google.com/favicon.ico"
+            alt="Google"
+            style={{ width: '18px', height: '18px' }}
+          />
+          Continue with Google
+        </a>
 
         {/* Footer */}
         <p style={styles.footer}>
