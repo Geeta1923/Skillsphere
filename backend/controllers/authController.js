@@ -209,6 +209,48 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
+// ===== EMAIL OTP REQUEST =====
+const requestEmailOTP = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  user.emailOTPEnabled = true;
+  user.emailOTPCode = otp;
+  user.emailOTPExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  await user.save();
+  await sendEmailOTP(email, user.name, otp);
+  res.json({ success: true, message: 'OTP sent to email' });
+});
+
+// ===== EMAIL OTP VERIFY =====
+const verifyEmailOTP = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  const user = await User.findOne({ email });
+  if (!user || !user.emailOTPEnabled) {
+    return res.status(400).json({ success: false, message: 'OTP not requested' });
+  }
+  if (user.emailOTPExpires < new Date()) {
+    return res.status(400).json({ success: false, message: 'OTP expired' });
+  }
+  if (user.emailOTPCode !== otp) {
+    return res.status(400).json({ success: false, message: 'Invalid OTP' });
+  }
+  // OTP valid – clear fields and log in
+  user.emailOTPEnabled = false;
+  user.emailOTPCode = null;
+  user.emailOTPExpires = null;
+  await user.save();
+  generateToken(res, user._id);
+  res.json({
+    success: true,
+    message: 'Logged in via email OTP',
+    user: { _id: user._id, name: user.name, email: user.email, role: user.role, isVerified: user.isVerified }
+  });
+});
+
 // ===== LOGOUT =====
 // POST /api/auth/logout
 const logoutUser = asyncHandler(async (req, res) => {
@@ -350,6 +392,6 @@ module.exports = {
   registerUser, loginUser, logoutUser, getMe,
   verifyEmail, forgotPassword, resetPassword,
   resendVerification,
-  setup2FA, verifyAndEnable2FA, login2FA, disable2FA
+  setup2FA, verifyAndEnable2FA, login2FA, disable2FA, requestEmailOTP, verifyEmailOTP
 };
 

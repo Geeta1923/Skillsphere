@@ -9,7 +9,9 @@ const {
   verifyEmail,
   forgotPassword,
   resetPassword,
-  resendVerification
+  resendVerification,
+  requestEmailOTP,
+  verifyEmailOTP
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -29,6 +31,8 @@ router.post('/2fa/setup', protect, setup2FA);
 router.post('/2fa/verify', protect, verifyAndEnable2FA);
 router.post('/2fa/login', login2FA);
 router.post('/2fa/disable', protect, disable2FA);
+router.post('/email-otp/request', requestEmailOTP);
+router.post('/email-otp/verify', verifyEmailOTP);
 
 
 module.exports = router;

@@ -70,10 +70,21 @@ const userSchema = new mongoose.Schema({
   isTwoFactorEnabled: {
     type: Boolean,
     default: false
+  },
+  // ✅ Email OTP fields
+  emailOTPEnabled: {
+    type: Boolean,
+    default: false
+  },
+  emailOTPCode: {
+    type: String,
+    default: null
+  },
+  emailOTPExpires: {
+    type: Date,
+    default: null
   }
-}, {
-  timestamps: true
-});
+}, { timestamps: true });
 
 // Hash password before saving
 userSchema.pre('save', async function() {

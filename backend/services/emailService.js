@@ -179,11 +179,32 @@ const sendProposalAcceptedEmail = async (email, name, gigTitle) => {
     html: baseTemplate(content)
   });
 };
+  // ===== SEND EMAIL OTP =====
+  const sendEmailOTP = async (email, name, otp) => {
+    const content = `
+      <div class="title">Your Login OTP 🔐</div>
+      <p class="text">Hi <span class="highlight">${name}</span>! Use the following one‑time code to complete your login. It expires in <strong>10 minutes</strong>.</p>
+      <div style="text-align:center; margin:32px 0;">
+        <span style="font-size:28px; font-weight:bold; letter-spacing:4px; color:#6c63ff;">${otp}</span>
+      </div>
+      <hr class="divider"/>
+      <p class="text" style="font-size:13px;">If you didn't request this, you can safely ignore this email.</p>
+    `;
 
-module.exports = {
-  sendVerificationEmail,
-  sendPasswordResetEmail,
-  sendProposalNotificationEmail,
-  sendPaymentConfirmationEmail,
-  sendProposalAcceptedEmail
-};
+    const transporter = createTransporter();
+    await transporter.sendMail({
+      from: `"SkillSphere" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: '🔐 Your SkillSphere login code',
+      html: baseTemplate(content)
+    });
+  };
+
+  module.exports = {
+    sendVerificationEmail,
+    sendPasswordResetEmail,
+    sendProposalNotificationEmail,
+    sendPaymentConfirmationEmail,
+    sendProposalAcceptedEmail,
+    sendEmailOTP
+  };
