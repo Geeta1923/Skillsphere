@@ -237,7 +237,7 @@ const Login = () => {
 
         {/* GOOGLE OAUTH */}
         <a
-          href="http://localhost:5000/api/auth/google"
+          href={process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api/auth/google` : 'http://localhost:5000/api/auth/google'}
           style={styles.googleBtn}
         >
           <img
